@@ -6,15 +6,37 @@ import repository.ToDoRepository
 
 class ToDoService(private val toDoRepository: ToDoRepository) {
 
+    var number = 1
+
     private fun generateSlug(taskName: String): String {
-        val consonant = "bcdfghjklmnpqrstvwxyz"
-        return taskName.filter { it in consonant }
+        var slug = taskName.toLowerCase()
+        slug = slug.replace(Regex("[^a-z0-9]+"),"-")
+        slug = slug.trim('-')
+        return slug
+    }
+
+    private fun antiSlugDuplicate(slug: String,duplicate: Int = 0 ,): String{
+        var dup = duplicate + 1
+        var slugfix = slug + dup.toString()
+        if (toDoRepository.isSlugExist(slugfix)){
+            antiSlugDuplicate(slug, dup)
+        } else {
+            println(slugfix)
+            return slugfix
+        }
+        return slugfix
     }
 
     private fun addToDoItem (taskName: String) {
         var slug = generateSlug(taskName)
-        val toDoItem = ToDo(slug = slug, taskName = taskName, isComplete = false)
-        toDoRepository.addToDoItem(toDoItem)
+        if (toDoRepository.isSlugExist(slug)){
+            println("Task belum diselesaikan")
+        } else {
+            val toDoItem = ToDo(id=number, slug = slug, taskName = taskName, isComplete = false)
+            number ++
+            toDoRepository.addToDoItem(toDoItem)
+        }
+
     }
 
     private fun removeToDoItem (toDoItem: ToDo){
@@ -87,9 +109,9 @@ class ToDoService(private val toDoRepository: ToDoRepository) {
     }
 
     private fun printCollection() {
-        println("Slug | Task Name = Status Task")
+        println("ID. | Slug | Task Name | Status Task")
         toDoRepository.getAllToDoItems().forEach{
-            selectedItem -> print("${selectedItem.slug}  | ${selectedItem.taskName} = ")
+            selectedItem -> print("${selectedItem.id}. | ${selectedItem.slug}  | ${selectedItem.taskName} | ")
             completeCheck(selectedItem)
         }
     }
